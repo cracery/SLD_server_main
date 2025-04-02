@@ -1,0 +1,47 @@
+{
+    "model_type": "FeatureWeightedNN",
+    "date_saved": "2025-03-31 18:32:03",
+    "input_dimension": 8,
+    "num_classes": 3,
+    "class_weights": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "metrics": {
+        "accuracy": 0.95,
+        "class_report": {
+            "Low": {
+                "precision": 0.9433962264150944,
+                "recall": 0.9803921568627451,
+                "f1-score": 0.9615384615384616,
+                "support": 51.0
+            },
+            "Middle": {
+                "precision": 0.9428571428571428,
+                "recall": 0.8461538461538461,
+                "f1-score": 0.8918918918918919,
+                "support": 39.0
+            },
+            "High": {
+                "precision": 0.9583333333333334,
+                "recall": 0.9857142857142858,
+                "f1-score": 0.971830985915493,
+                "support": 70.0
+            },
+            "accuracy": 0.95,
+            "macro avg": {
+                "precision": 0.9481955675351902,
+                "recall": 0.9374200962436255,
+                "f1-score": 0.9417537797819487,
+                "support": 160.0
+            },
+            "weighted avg": {
+                "precision": 0.9497998090745734,
+                "recall": 0.95,
+                "f1-score": 0.9490650896020615,
+                "support": 160.0
+            }
+        }
+    }
+}
