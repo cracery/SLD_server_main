@@ -450,7 +450,7 @@ async def healthcheck():
     Перевірка стану API.
     """
     global model_name, stress_model, model_metadata
-    return {"status": "ok", "model_loaded": model is not None}
+    return {"status": "ok", "model_loaded": stress_model is not None}
 
 @app.get("/model_info")
 async def get_model_info():
