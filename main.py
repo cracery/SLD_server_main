@@ -53,7 +53,7 @@ async def serve_root():
     """
     Віддає analyse.html при переході на корінь "/"
     """
-    return FileResponse("static/analyse.html")
+    return FileResponse("static/speedometer.html")
 
 @app.get("/analyse", response_class=HTMLResponse)
 async def serve_analyse():
