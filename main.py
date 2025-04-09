@@ -8,7 +8,7 @@ from io import BytesIO
 from typing import Optional, List
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.status import HTTP_307_TEMPORARY_REDIRECT
 from pydantic import BaseModel
