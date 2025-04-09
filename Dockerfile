@@ -39,8 +39,7 @@ COPY ./models/* /app/models/
 COPY main.py .
 COPY model_loader.py .
 COPY utils.py .
-COPY *.html .
-COPY *.png .
+COPY static /app/static
 
 # Встановлення змінних середовища
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
