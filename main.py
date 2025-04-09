@@ -49,35 +49,26 @@ except RuntimeError:
     pass
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
+async def serve_root():
     """
-    Головна сторінка сервісу. За замовчуванням повертає analyse.html
+    Віддає analyse.html при переході на корінь "/"
     """
-    return default_html_response()
+    return FileResponse("static/analyse.html")
 
 @app.get("/analyse", response_class=HTMLResponse)
-async def get_analyse_html():
+async def serve_analyse():
     """
-    Відкриває файл analyse.html з аналізом стресу
+    Віддає analyse.html
     """
-    try:
-        with open("analyse.html", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content)
-    except FileNotFoundError:
-        return default_html_response()
+    return FileResponse("static/analyse.html")
 
 @app.get("/speedometer", response_class=HTMLResponse)
-async def get_speedometer_html():
+async def serve_speedometer():
     """
-    Відкриває файл speedometer.html зі спідометром рівня стресу
+    Віддає speedometer.html
     """
-    try:
-        with open("speedometer.html", "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content)
-    except FileNotFoundError:
-        return RedirectResponse(url="/", status_code=HTTP_307_TEMPORARY_REDIRECT)
+    return FileResponse("static/speedometer.html")
+
 
 @app.get("/docs-redirect")
 async def redirect_to_docs():
