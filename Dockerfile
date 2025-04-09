@@ -40,7 +40,7 @@ COPY main.py .
 COPY model_loader.py .
 COPY utils.py .
 COPY *.html .
-COPY QR_SLD.png .
+COPY *.png .
 
 # Встановлення змінних середовища
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
