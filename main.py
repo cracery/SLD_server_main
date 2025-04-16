@@ -77,7 +77,6 @@ async def redirect_to_docs():
     """
     return RedirectResponse(url="https://stress-detection-api-ym1t.onrender.com/docs#", 
                            status_code=HTTP_307_TEMPORARY_REDIRECT)
-
 def default_html_response():
     """
     Повертає стандартний HTML у випадку, якщо файл не знайдено
@@ -287,15 +286,39 @@ class StressResponse(BaseModel):
     confidence: float
     metrics: Optional[dict] = None
 
+# Додайте цю функцію для зменшення розміру зображення перед обробкою
+def resize_image_if_needed(image, max_size=800):
+    """
+    Зменшує розмір зображення, якщо воно завелике.
+    Це допомагає запобігти помилкам OOM (Out of Memory) на сервері.
+    """
+    width, height = image.size
+    
+    # Перевіряємо, чи зображення завелике
+    if width > max_size or height > max_size:
+        # Обчислюємо новий розмір зі збереженням пропорцій
+        if width > height:
+            new_width = max_size
+            new_height = int(height * (max_size / width))
+        else:
+            new_height = max_size
+            new_width = int(width * (max_size / height))
+        
+        # Змінюємо розмір зображення
+        resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+        return resized_image
+    
+    return image
+
+
+
 @app.post("/predict/image")
 async def predict_image(file: UploadFile = File(...)):
     try:
-        # Тут виклик функції аналізу стресу
-        print("Викликаємо функцію аналізу стресу...")
+        # Додаємо інформацію про запит у логи
+        print(f"Отримано запит на аналіз зображення: {file.filename}, content_type: {file.content_type}")
         
         global model_name, stress_model, model_metadata, feature_importance, learned_weights
-        
-        print(f"Отримано запит на аналіз зображення: {file.filename}")
         
         # Перевірте, чи модель стресу завантажена
         if stress_model is None:
@@ -304,77 +327,148 @@ async def predict_image(file: UploadFile = File(...)):
         
         # Зчитуємо зображення
         contents = await file.read()
-        print(f"Зчитано {len(contents)} байтів даних")
+        file_size = len(contents)
+        print(f"Зчитано {file_size} байтів даних")
+        
+        # Встановлюємо обмеження на розмір файлу (20 МБ)
+        max_file_size = 20 * 1024 * 1024  # 20 МБ у байтах
+        if file_size > max_file_size:
+            return {"status": "error", "detail": "Файл завеликий. Максимальний розмір - 20 МБ"}
         
         # Декодуємо зображення
-        image = Image.open(io.BytesIO(contents))
-        print(f"Зображення успішно декодовано, розмір: {image.size}")
-        
-        # Перетворюємо на массив numpy
-        img_array = np.array(image)
-        print(f"Зображення перетворено на масив numpy, форма: {img_array.shape}")
-        
-        # Тут виклик функції аналізу емоцій
-        print("Викликаємо функцію аналізу емоцій...")
-        emotions_result = DeepFace.analyze(img_path=img_array, actions=['emotion'], enforce_detection=False)
-        
-        # Отримання емоцій у потрібному форматі для моделі стресу
-        emotions = {}
-        if isinstance(emotions_result, list):
-            emotions = emotions_result[0]['emotion']
-        else:
-            emotions = emotions_result['emotion']
-        
-        print(f"Результат аналізу емоцій: {emotions}")
-        
-        # Підготовка вхідних даних для моделі стресу
-        input_features = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral", "contempt"]
-        input_values = []
-        for feature in input_features:
-            if feature == "contempt" and "contempt" not in emotions:
-                # Якщо contempt відсутній у результатах DeepFace, встановлюємо значення 0
-                input_values.append(0)
+        try:
+            image = Image.open(io.BytesIO(contents))
+            print(f"Зображення успішно декодовано, розмір: {image.size}, формат: {image.format}")
+            
+            # Зменшуємо розмір зображення, якщо воно завелике
+            max_image_size = 800  # Максимальний розмір сторони зображення
+            image = resize_image_if_needed(image, max_image_size)
+            print(f"Розмір зображення після обробки: {image.size}")
+            
+            # Виправлення орієнтації для мобільних фото
+            try:
+                for orientation in ExifTags.TAGS.keys():
+                    if ExifTags.TAGS[orientation] == 'Orientation':
+                        break
+                
+                exif = image._getexif()
+                if exif is not None and orientation in exif:
+                    if exif[orientation] == 2:
+                        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+                    elif exif[orientation] == 3:
+                        image = image.transpose(Image.ROTATE_180)
+                    elif exif[orientation] == 4:
+                        image = image.transpose(Image.FLIP_TOP_BOTTOM)
+                    elif exif[orientation] == 5:
+                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
+                    elif exif[orientation] == 6:
+                        image = image.transpose(Image.ROTATE_270)
+                    elif exif[orientation] == 7:
+                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
+                    elif exif[orientation] == 8:
+                        image = image.transpose(Image.ROTATE_90)
+                
+                print("Орієнтацію зображення перевірено та виправлено за потреби")
+            except Exception as e:
+                print(f"Помилка при виправленні орієнтації: {str(e)}")
+            
+            # Конвертуємо в RGB, якщо потрібно
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+                print(f"Зображення конвертовано в RGB режим")
+            
+            # Перетворюємо на масив numpy
+            img_array = np.array(image)
+            print(f"Зображення перетворено на масив numpy, форма: {img_array.shape}")
+            
+            # Тут виклик функції аналізу емоцій
+            print("Викликаємо функцію аналізу емоцій...")
+            
+            # Обробляємо виняткові ситуації з DeepFace
+            try:
+                emotions_result = DeepFace.analyze(img_path=img_array, actions=['emotion'], enforce_detection=False)
+                print(f"DeepFace успішно проаналізував зображення")
+            except Exception as deepface_error:
+                print(f"Помилка при першій спробі аналізу DeepFace: {str(deepface_error)}")
+                
+                # Спробуємо покращити зображення та повторити аналіз
+                try:
+                    # Перетворюємо в сірий колір і нормалізуємо
+                    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                    normalized = cv2.equalizeHist(gray)
+                    enhanced = cv2.cvtColor(normalized, cv2.COLOR_GRAY2RGB)
+                    
+                    print("Зображення покращено для розпізнавання обличчя")
+                    emotions_result = DeepFace.analyze(img_path=enhanced, actions=['emotion'], enforce_detection=False)
+                    print("DeepFace успішно проаналізував покращене зображення")
+                except Exception as enhanced_error:
+                    print(f"Помилка при аналізі покращеного зображення: {str(enhanced_error)}")
+                    return {"status": "error", "detail": "Не вдалося виявити обличчя на зображенні. Будь ласка, спробуйте інше фото."}
+            
+            # Отримання емоцій у потрібному форматі для моделі стресу
+            emotions = {}
+            if isinstance(emotions_result, list):
+                if len(emotions_result) == 0:
+                    return {"status": "error", "detail": "Обличчя не знайдено на зображенні"}
+                emotions = emotions_result[0]['emotion']
             else:
-                input_values.append(emotions.get(feature, 0))
-        
-        # Тут виклик функції аналізу стресу
-        print("Викликаємо функцію аналізу стресу...")
-        
-        # Перевірте, чи модель стресу завантажена
-        if stress_model is None:
-            stress_model, _, _, _ = load_weighted_model("stress_detector_weighted_nn")
+                emotions = emotions_result['emotion']
             
-        # Перетворення на тензор
-        input_tensor = torch.tensor([input_values], dtype=torch.float32)
-        
-        # Прогнозування
-        with torch.no_grad():
-            stress_output = stress_model(input_tensor)
+            print(f"Результат аналізу емоцій: {emotions}")
             
-        # Перетворення результату
-        stress_probabilities = torch.softmax(stress_output, dim=1).numpy()[0]
-        stress_classes = ["Low", "Middle", "High"]
-        stress_result = {stress_classes[i]: float(stress_probabilities[i]) for i in range(len(stress_classes))}
-        
-        # Визначення найбільш ймовірного класу стресу
-        predicted_stress = stress_classes[np.argmax(stress_probabilities)]
-        
-        # Формування результату
-        result = {
-            "emotions": emotions,
-            "stress_probabilities": stress_result,
-            "predicted_stress": predicted_stress
-        }
-        
-        print(f"Результат аналізу стресу: {result}")
-        
-        # Результат
-        return {"status": "success", "result": result}
+            # Підготовка вхідних даних для моделі стресу
+            input_features = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral", "contempt"]
+            input_values = []
+            for feature in input_features:
+                if feature == "contempt" and "contempt" not in emotions:
+                    input_values.append(0)
+                else:
+                    input_values.append(emotions.get(feature, 0))
+            
+            # Нормалізуємо значення
+            sum_values = sum(input_values)
+            if sum_values > 0:
+                input_values = [v / sum_values for v in input_values]
+            
+            # Прогнозування стресу
+            print("Викликаємо функцію аналізу стресу...")
+            
+            # Перетворення на тензор
+            input_tensor = torch.tensor([input_values], dtype=torch.float32)
+            
+            # Прогнозування
+            with torch.no_grad():
+                stress_output = stress_model(input_tensor)
+                
+            # Перетворення результату
+            stress_probabilities = torch.softmax(stress_output, dim=1).numpy()[0]
+            stress_classes = ["Low", "Middle", "High"]
+            stress_result = {stress_classes[i]: float(stress_probabilities[i]) for i in range(len(stress_classes))}
+            
+            # Визначення найбільш ймовірного класу стресу
+            predicted_stress = stress_classes[np.argmax(stress_probabilities)]
+            
+            # Формування результату
+            result = {
+                "emotions": emotions,
+                "stress_probabilities": stress_result,
+                "predicted_stress": predicted_stress
+            }
+            
+            print(f"Результат аналізу стресу: {predicted_stress}")
+            
+            # Результат
+            return {"status": "success", "result": result}
+            
+        except Exception as image_error:
+            print(f"Помилка при обробці зображення: {str(image_error)}")
+            return {"status": "error", "detail": f"Помилка при обробці зображення: {str(image_error)}"}
+            
     except Exception as e:
-        print(f"Помилка при аналізі зображення: {str(e)}")
+        print(f"Загальна помилка при аналізі зображення: {str(e)}")
         import traceback
         print(traceback.format_exc())
-        return {"status": "error", "detail": str(e)}, 500
+        return {"status": "error", "detail": str(e)}
 
 @app.post("/predict/base64", response_model=StressResponse)
 async def predict_from_base64(base64_image: str = Form(...)):
@@ -519,7 +613,7 @@ async def roc_curve():
             "auc": 0.81
         }
     }
-    
+
     return roc_data
 
 if __name__ == "__main__":
