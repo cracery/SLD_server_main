@@ -16,7 +16,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# ⇢ Secrets
 .env
 .env.*
 .pypirc
