@@ -1,14 +1,11 @@
 services:
-  # Сервіс для API прогнозування стресу
   - type: web
     name: stress-detection-api
     env: docker
-    repo: https://github.com/felkost/stress-detection-api # Замініть на свій репозиторій
+    repo: https://github.com/cracery/SLD_server_main
     branch: main
-    #buildCommand: docker build -t stress-detection-api .
-    #startCommand: docker run -p $PORT:$PORT -e PORT=$PORT stress-detection-api
     envVars:
       - key: MODEL_BASE_URL
-        value: "1-ZfjNWADgAOxA2up5ddiiihmt4keB6Kv" # Замініть на реальний URL для моделей
+        value: "1-ZfjNWADgAOxA2up5ddiiihmt4keB6Kv"
     healthCheckPath: /healthcheck
     autoDeploy: true
