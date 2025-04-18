@@ -449,3 +449,12 @@ async def predict_image(file: UploadFile = File(...)):
         import traceback
         print(traceback.format_exc())
         return {"status": "error", "detail": str(e)}
+
+
+@app.get("/healthcheck")
+async def healthcheck():
+    """
+    Перевірка стану API.
+    """
+    global model_name, stress_model, model_metadata
+    return {"status": "ok", "model_loaded": stress_model is not None}
