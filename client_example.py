@@ -42,27 +42,22 @@ def predict_from_image(api_url, image_path):
         print(f"error while sending request: {str(e)}")
         return None
 
+parser = argparse.ArgumentParser(description='Stress recognition client API')
+parser.add_argument('--api_url', type=str, default='http://localhost:8000',
+                    help='URL server API (default: http://localhost:8000)')
 
-def main():
-    parser = argparse.ArgumentParser(description='Stress recognition client API')
-    parser.add_argument('--api_url', type=str, default='http://localhost:8000',
-                        help='URL server API (default: http://localhost:8000)')
-    
-    subparsers = parser.add_subparsers(dest='command', help='Команда')
-    
-    # image parser
-    image_parser = subparsers.add_parser('image', help='Прогнозування за зображенням')
-    image_parser.add_argument('image_path', type=str, help='Шлях до зображення')
+subparsers = parser.add_subparsers(dest='command', help='Команда')
 
-    args = parser.parse_args()
-    
-    if args.command == 'image':
-        result = predict_from_image(args.api_url, args.image_path)
-        if result:
-            print("Prediction result:")
-            pprint.pprint(result)
-    else:
-        parser.print_help()
+# image parser
+image_parser = subparsers.add_parser('image', help='Прогнозування за зображенням')
+image_parser.add_argument('image_path', type=str, help='Шлях до зображення')
 
-if __name__ == "__main__":
-    main()
+args = parser.parse_args()
+
+if args.command == 'image':
+    result = predict_from_image(args.api_url, args.image_path)
+    if result:
+        print("Prediction result:")
+        pprint.pprint(result)
+else:
+    parser.print_help()
