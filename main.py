@@ -458,8 +458,7 @@ async def healthcheck():
     global model_name, stress_model, model_metadata
     return {"status": "ok", "model_loaded": stress_model is not None}
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    
-    uvicorn.run(app, host="0.0.0.0", port=port)
+import uvicorn
+port = int(os.environ.get("PORT", 8000))
+
+uvicorn.run(app, host="0.0.0.0", port=port)
