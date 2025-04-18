@@ -41,7 +41,7 @@ def predict_from_image(api_url, image_path):
     except Exception as e:
         print(f"error while sending request: {str(e)}")
         return None
-
+"""
 parser = argparse.ArgumentParser(description='Stress recognition client API')
 parser.add_argument('--api_url', type=str, default='http://localhost:8000',
                     help='URL server API (default: http://localhost:8000)')
@@ -61,3 +61,4 @@ if args.command == 'image':
         pprint.pprint(result)
 else:
     parser.print_help()
+"""
