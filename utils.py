@@ -1,5 +1,4 @@
 import os
-import base64
 import numpy as np
 import cv2
 from pathlib import Path
@@ -15,63 +14,6 @@ def ensure_dir_exists(dir_path: str) -> None:
         dir_path: Шлях до директорії
     """
     os.makedirs(dir_path, exist_ok=True)
-
-def decode_base64_image(base64_str: str) -> np.ndarray:
-    """
-    Декодує base64-кодоване зображення у масив numpy.
-    
-    Args:
-        base64_str: Base64-кодоване зображення
-        
-    Returns:
-        np.ndarray: Декодоване зображення у форматі numpy array
-    """
-    try:
-        # Видалення префікса base64 якщо він є
-        if ',' in base64_str:
-            base64_str = base64_str.split(',')[1]
-            
-        # Декодування base64
-        image_data = base64.b64decode(base64_str)
-        
-        # Конвертація у numpy array
-        nparr = np.frombuffer(image_data, np.uint8)
-        
-        # Декодування зображення за допомогою OpenCV
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        # Конвертація BGR в RGB
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        
-        return img_rgb
-    except Exception as e:
-        raise ValueError(f"Помилка при декодуванні base64-зображення: {str(e)}")
-
-def save_image_from_base64(base64_str: str, output_path: str) -> str:
-    """
-    Зберігає base64-кодоване зображення як файл.
-    
-    Args:
-        base64_str: Base64-кодоване зображення
-        output_path: Шлях для збереження зображення
-        
-    Returns:
-        str: Повний шлях до збереженого зображення
-    """
-    try:
-        # Декодування зображення
-        img = decode_base64_image(base64_str)
-        
-        # Перевірка директорії
-        output_dir = os.path.dirname(output_path)
-        ensure_dir_exists(output_dir)
-        
-        # Збереження зображення
-        cv2.imwrite(output_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-        
-        return output_path
-    except Exception as e:
-        raise ValueError(f"Помилка при збереженні зображення: {str(e)}")
 
 def preprocess_image_for_deepface(img: np.ndarray) -> np.ndarray:
     """
