@@ -17,7 +17,7 @@ def predict_from_image(api_url, image_path):
     """
     # check if file exists
     if not Path(image_path).exists():
-        print(f"Помилка: Файл {image_path} не існує")
+        print(f"Error: File {image_path} doesn't exist")
         return None
     
     # prepare sending file
