@@ -251,12 +251,12 @@ async def predict_image(file: UploadFile = File(...)):
         try:
             image = Image.open(io.BytesIO(contents))
             print(f"Зображення успішно декодовано, розмір: {image.size}, формат: {image.format}")
-           ''' 
+
             # Make image size lower
-            max_image_size = 800 
-            image = resize_image_if_needed(image, max_image_size)
-            print(f"Розмір зображення після обробки: {image.size}")
-            '''
+            #max_image_size = 800 
+            #image = resize_image_if_needed(image, max_image_size)
+            #print(f"Розмір зображення після обробки: {image.size}")
+            
             # Fix orientation for mobile
             try:
                 for orientation in ExifTags.TAGS.keys():
