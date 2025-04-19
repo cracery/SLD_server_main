@@ -3,18 +3,16 @@ import torch
 import numpy as np
 import json
 from torch import nn
-
-# Визначення класу FeatureWeightedNN
+# FeatureWeightedNN class
 class FeatureWeightedNN(nn.Module):
     def __init__(self, input_dim=8, num_classes=3, feature_importance=None):
         super(FeatureWeightedNN, self).__init__()
-
-        # Ініціалізація параметрів
+        # Initialise parameters
         self.input_dim = input_dim
 
-        # Шар зважування ознак
+        # Feature weighting layer
         if feature_importance is not None:
-            # Нормалізація важливості ознак
+            # Normalise importance of features
             if isinstance(feature_importance, np.ndarray):
                 normalized_importance = feature_importance / np.max(feature_importance) if np.max(feature_importance) > 0 else feature_importance
                 self.feature_weights = nn.Parameter(
@@ -26,7 +24,7 @@ class FeatureWeightedNN(nn.Module):
         else:
             self.feature_weights = nn.Parameter(torch.ones(1, input_dim), requires_grad=True)
 
-        # Основна архітектура мережі
+        # Main architecture
         self.model = nn.Sequential(
             nn.BatchNorm1d(input_dim),
             nn.Linear(input_dim, 128),
@@ -48,92 +46,91 @@ class FeatureWeightedNN(nn.Module):
         )
 
     def forward(self, x):
-        # Зважування вхідних ознак за їх важливістю
+        # Weight input features by importance
         weighted_x = x * self.feature_weights
-        # Обробка зважених ознак моделлю
+        # Process weighted features by the model
         return self.model(weighted_x)
     
 def load_weighted_model(model_name):
     try:
-        # Шляхи до файлів моделі
         model_path = f"models/{model_name}.pth"
         feature_importance_path = f"models/{model_name}_feature_importance.npy"
         weights_path = f"models/{model_name}_learned_weights.npy"
         metadata_path = f"models/{model_name}_metadata.json"
         
-        print(f"Спроба завантажити модель з {model_path}")
+        print(f"Trying to load model from {model_path}")
         
-        # Перевірка наявності файлів
+        # Check if files avaliable
         if not os.path.exists(model_path):
-            print(f"Файл моделі не знайдено за шляхом {model_path}")
+            print(f"Model file not found at path {model_path}")
             return create_default_model()
         
-        # Завантажуємо feature_importance
+        # load feature_importance
         feature_importance = None
         if os.path.exists(feature_importance_path):
             try:
                 feature_importance = np.load(feature_importance_path, allow_pickle=True)
-                print(f"Завантажено feature_importance, тип: {type(feature_importance)}")
+                print(f"Loaded feature_importance, type: {type(feature_importance)}")
             except Exception as e:
-                print(f"Помилка при завантаженні feature_importance: {str(e)}")
+                print(f"Error loading feature_importance: {str(e)}")
         else:
-            print(f"Файл feature_importance не знайдено")
+            print(f"feature_importance file not found")
         
-        # Створюємо екземпляр моделі
+        # Create model instance
         model = FeatureWeightedNN(input_dim=8, num_classes=3, feature_importance=feature_importance)
         
-        # Завантажуємо state_dict моделі
+        # Load model state_dict
         state_dict = torch.load(model_path, map_location=torch.device('cpu'))
         
-        # Відображаємо ключі для діагностики
-        print(f"Ключі у state_dict: {list(state_dict.keys())}")
+        # Display keys for diagnostics
+        print(f"Keys in state_dict: {list(state_dict.keys())}")
         
-        # Спробуємо завантажити state_dict
+        # Load state_dict
         try:
             model.load_state_dict(state_dict, strict=True)
-            print("Модель успішно завантажена з strict=True")
+            print("Model is loaded with strict=False")
         except Exception as e:
-            print(f"Помилка при завантаженні з strict=True: {str(e)}")
+            print(f"Error loading with strict=True: {str(e)}")
             
-            # Спробуємо з strict=False
+            # add strict=False
             try:
                 model.load_state_dict(state_dict, strict=False)
-                print("Модель завантажена з параметром strict=False")
+                print("Model is loaded with strict=False")
             except Exception as e2:
-                print(f"Помилка при завантаженні з strict=False: {str(e2)}")
-                print("Неможливо завантажити модель, використовуємо дефолтну")
+                print(f"Error loading with strict=False: {str(e2)}")
+                print("Cannot load the model, use the default one")
                 return create_default_model()
         
-        # Завантажуємо learned_weights
+        #Load learned_weights
         learned_weights = None
         if os.path.exists(weights_path):
             try:
                 learned_weights = np.load(weights_path, allow_pickle=True)
-                print(f"Завантажено learned_weights, тип: {type(learned_weights)}")
+                print(f"Loaded learned_weights, type: {type(learned_weights)}")
             except Exception as e:
-                print(f"Помилка при завантаженні learned_weights: {str(e)}")
+                print(f"Error loading learned_weights: {str(e)}")
         else:
-            print(f"Файл learned_weights не знайдено")
+            print(f"File learned_weights not found")
         
-        # Завантажуємо метадані
+        # Load metadata
         metadata = {}
         if os.path.exists(metadata_path):
             try:
                 with open(metadata_path, "r") as f:
                     metadata = json.load(f)
-                print(f"Завантажено метадані: {list(metadata.keys()) if metadata else 'порожні метадані'}")
+                print(f"Metadata has been uploaded: {list(metadata.keys()) if metadata else 'порожні метадані'}")
             except Exception as e:
-                print(f"Помилка при завантаженні метаданих: {str(e)}")
+                print(f"Error loading metadata: {str(e)}")
         else:
-            print(f"Файл метаданих не знайдено за шляхом {metadata_path}")
+            print(f"Metadata file not found at path {metadata_path}")
         
         # Переводимо модель в режим оцінки
         model.eval()
-        print("Модель успішно завантажена і переведена в режим оцінки")
+        print("Model successfully loaded and put into evaluation mode")
         return model, feature_importance, learned_weights, metadata
         
     except Exception as e:
-        print(f"Загальна помилка при завантаженні моделі {model_name}: {str(e)}")
+        print(f"General error when loading model {model_name}: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return None, None, None, None   
