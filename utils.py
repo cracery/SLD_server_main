@@ -8,48 +8,45 @@ from PIL import Image
 
 def ensure_dir_exists(dir_path: str) -> None:
     """
-    Перевіряє існування директорії і створює її за необхідністю.
-    
+    Checks the existence of directory and creates it if need.
     Args:
-        dir_path: Шлях до директорії
+        dir_path: Directory path
     """
     os.makedirs(dir_path, exist_ok=True)
 
 def preprocess_image_for_deepface(img: np.ndarray) -> np.ndarray:
     """
-    Препроцесінг зображення для DeepFace.
-    
+    Preprocess image for DeepFace.
     Args:
-        img: Зображення у форматі numpy array
+        img: Images in numpy array format
         
     Returns:
-        np.ndarray: Препроцесоване зображення
+        np.ndarray: Preprocessed image
     """
-    # Конвертація у RGB (якщо необхідно)
-    if len(img.shape) == 2:  # Зображення у відтінках сірого
+    # Convert in RGB
+    if len(img.shape) == 2:  # Grayscale
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    elif img.shape[2] == 4:  # Зображення з альфа-каналом
+    elif img.shape[2] == 4:  # Alpha channel
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-    
     return img
 
 def format_emotion_vector(emotions: Dict[str, float]) -> np.ndarray:
     """
-    Форматує словник емоцій у нормалізований вектор.
+    Format emotion dictionary into a normalised vector.
     
     Args:
-        emotions: Словник з ймовірностями емоцій
+        emotions: Dictionary with emotion probabilities
         
     Returns:
-        np.ndarray: Нормалізований вектор емоцій
+        np.ndarray: Normalised vector of emotions
     """
-    # Перелік усіх емоцій у потрібному порядку
+    #List all emotions in the correct order
     all_emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral', 'contempt']
     
-    # Створюємо вектор емоцій
+    # Create emotions vector
     emotion_vector = np.array([emotions.get(emotion, 0.0) for emotion in all_emotions], dtype=np.float32)
     
-    # Нормалізація вектора
+    # Normalise
     if np.sum(emotion_vector) > 0:
         emotion_vector = emotion_vector / np.sum(emotion_vector)
     
@@ -57,31 +54,31 @@ def format_emotion_vector(emotions: Dict[str, float]) -> np.ndarray:
 
 def format_stress_result(level: str, probabilities: Dict[str, float], threshold: float = 0.5) -> Dict[str, Any]:
     """
-    Форматує результати прогнозування стресу.
+    Format results of stress prediction.
     
     Args:
-        level: Рівень стресу ('Low', 'Middle', 'High')
-        probabilities: Словник з ймовірностями для кожного рівня
-        threshold: Поріг для визначення впевненості
+        level: Stress level ('Low', 'Middle', 'High')
+        probabilities: Dictionary with probabilities for each level
+        threshold: Threshold for determining assurance
         
     Returns:
-        dict: Форматовані результати
+        dict: Formated results
     """
-    # Знаходимо найбільшу ймовірність
+    # Find highest propability
     max_prob = max(probabilities.values())
     
-    # Визначаємо повідомлення щодо впевненості
+    # assurance message
     if max_prob >= threshold:
-        confidence_message = "високою впевненістю"
+        confidence_message = "High assurance"
     else:
-        confidence_message = "низькою впевненістю"
+        confidence_message = "Low assurance"
     
-    # Форматування ймовірностей (округлення до 2 знаків після коми)
+    # Round to 2 symbols
     formatted_probs = {k: round(v * 100, 2) for k, v in probabilities.items()}
     
     return {
         "stress_level": level,
         "probabilities": formatted_probs,
         "confidence": round(max_prob * 100, 2),
-        "message": f"Виявлено рівень стресу '{level}' з {confidence_message} ({round(max_prob * 100, 2)}%)"
+        "message": f"Stress level detected '{level}' з {confidence_message} ({round(max_prob * 100, 2)}%)"
     }
