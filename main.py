@@ -253,36 +253,9 @@ async def predict_image(file: UploadFile = File(...)):
             print(f"Зображення успішно декодовано, розмір: {image.size}, формат: {image.format}")
 
             # Make image size lower
-            #max_image_size = 800 
-            #image = resize_image_if_needed(image, max_image_size)
-            #print(f"Розмір зображення після обробки: {image.size}")
-            
-            # Fix orientation for mobile
-            try:
-                for orientation in ExifTags.TAGS.keys():
-                    if ExifTags.TAGS[orientation] == 'Orientation':
-                        break
-                
-                exif = image._getexif()
-                if exif is not None and orientation in exif:
-                    if exif[orientation] == 2:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT)
-                    elif exif[orientation] == 3:
-                        image = image.transpose(Image.ROTATE_180)
-                    elif exif[orientation] == 4:
-                        image = image.transpose(Image.FLIP_TOP_BOTTOM)
-                    elif exif[orientation] == 5:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
-                    elif exif[orientation] == 6:
-                        image = image.transpose(Image.ROTATE_270)
-                    elif exif[orientation] == 7:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
-                    elif exif[orientation] == 8:
-                        image = image.transpose(Image.ROTATE_90)
-                
-                print("Orientation for mobile was checked and fixed")
-            except Exception as e:
-                print(f"Error while fixing orientation: {str(e)}")
+            max_image_size = 800 
+            image = resize_image_if_needed(image, max_image_size)
+            print(f"Image size after processing: {image.size}")
             
             # Convert into RGB if needed
             if image.mode != 'RGB':
