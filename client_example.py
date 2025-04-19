@@ -6,7 +6,7 @@ import pprint
 
 def predict_from_image(api_url, image_path):
     """
-    Відправляє запит на прогнозування рівня стресу за зображенням
+    Send request for prediction of stress levels by image
     
     Args:
         api_url: URL API server
@@ -41,24 +41,3 @@ def predict_from_image(api_url, image_path):
     except Exception as e:
         print(f"error while sending request: {str(e)}")
         return None
-"""
-parser = argparse.ArgumentParser(description='Stress recognition client API')
-parser.add_argument('--api_url', type=str, default='http://localhost:8000',
-                    help='URL server API (default: http://localhost:8000)')
-
-subparsers = parser.add_subparsers(dest='command', help='Команда')
-
-# image parser
-image_parser = subparsers.add_parser('image', help='Прогнозування за зображенням')
-image_parser.add_argument('image_path', type=str, help='Шлях до зображення')
-
-args = parser.parse_args()
-
-if args.command == 'image':
-    result = predict_from_image(args.api_url, args.image_path)
-    if result:
-        print("Prediction result:")
-        pprint.pprint(result)
-else:
-    parser.print_help()
-"""
