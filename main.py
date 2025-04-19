@@ -250,7 +250,7 @@ async def predict_image(file: UploadFile = File(...)):
         # Decode image
         try:
             image = Image.open(io.BytesIO(contents))
-            print(f"Зображення успішно декодовано, розмір: {image.size}, формат: {image.format}")
+            print(f"Image successfully decoded, size: {image.size}, format: {image.format}")
 
             # Make image size lower
             max_image_size = 800 
