@@ -47,16 +47,16 @@ except RuntimeError:
 @app.get("/", response_class=HTMLResponse)
 async def serve_root():
     """
-    returns speedometer.html when goes to root "/"
+    returns sld.html when goes to root "/"
     """
-    return FileResponse("static/speedometer.html")
+    return FileResponse("static/sld.html")
 
-@app.get("/speedometer", response_class=HTMLResponse)
+@app.get("/sld", response_class=HTMLResponse)
 async def serve_speedometer():
     """
-    Returns speedometer.html
+    Returns sld.html
     """
-    return FileResponse("static/speedometer.html")
+    return FileResponse("static/sld.html")
 
 def default_html_response():
     """
