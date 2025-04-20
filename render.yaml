@@ -7,5 +7,5 @@ services:
     envVars:
       - key: MODEL_BASE_URL
         value: "1-ZfjNWADgAOxA2up5ddiiihmt4keB6Kv"
-    healthCheckPath: /healthcheck
+    #healthCheckPath: /healthcheck
     autoDeploy: true

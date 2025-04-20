@@ -1,5 +1,4 @@
 import os
-import base64
 import torch
 import numpy as np
 import io
@@ -16,18 +15,18 @@ import cv2
 from deepface import DeepFace
 
 
-# Імпорт власних модулів
+# improt special modules
 from model_loader import load_weighted_model
 
-# Глобальні змінні для моделі
+# Global values
 stress_model = None
 model_metadata = None
 feature_importance = None
 learned_weights = None
 
-app = FastAPI(title="Stress Detection API", description="API для визначення рівня стресу на основі аналізу емоцій обличчя.")
+app = FastAPI(title="Stress Detection API", description="Facial expression stress recognition API.")
 
-# Налаштування CORS для доступу з веб-клієнтів
+# setting CORS for web clien aссess
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,162 +35,76 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Завантаження моделі при запуску сервера
+# Load model while server is starting
 model_name = "stress_detector_weighted_nn"
-#model = None
-#metadata = None
 
-# Спробуємо підключити статичні файли, якщо вони є
+# if there are static files, connect
 try:
     app.mount("/static", StaticFiles(directory="static"), name="static")
 except RuntimeError:
-    # Якщо директорії немає, просто продовжуємо
     pass
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_root():
     """
-    Віддає analyse.html при переході на корінь "/"
+    returns sld.html when goes to root "/"
     """
-    return FileResponse("static/speedometer.html")
+    return FileResponse("static/sld.html")
 
-@app.get("/analyse", response_class=HTMLResponse)
-async def serve_analyse():
-    """
-    Віддає analyse.html
-    """
-    return FileResponse("static/analyse.html")
-
-@app.get("/speedometer", response_class=HTMLResponse)
+@app.get("/sld", response_class=HTMLResponse)
 async def serve_speedometer():
     """
-    Віддає speedometer.html
+    Returns sld.html
     """
-    return FileResponse("static/speedometer.html")
+    return FileResponse("static/sld.html")
 
-
-@app.get("/docs-redirect")
-async def redirect_to_docs():
-    """
-    Перенаправляє користувача на сторінку документації API
-    """
-    return RedirectResponse(url="https://stress-detection-api-ym1t.onrender.com/docs#", 
-                           status_code=HTTP_307_TEMPORARY_REDIRECT)
 def default_html_response():
     """
-    Повертає стандартний HTML у випадку, якщо файл не знайдено
+    returns Default.html in case, if file not found
     """
-    return HTMLResponse(content="""
-    <html>
-        <head>
-            <title>Stress Detection API</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    line-height: 1.6;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                }
-                h1 {
-                    color: #2c3e50;
-                    border-bottom: 2px solid #3498db;
-                    padding-bottom: 10px;
-                }
-                .nav-links {
-                    background-color: #f8f9fa;
-                    padding: 15px;
-                    border-radius: 5px;
-                    margin-bottom: 20px;
-                }
-                .nav-links a {
-                    display: inline-block;
-                    margin-right: 15px;
-                    text-decoration: none;
-                    color: #3498db;
-                    font-weight: bold;
-                }
-                .nav-links a:hover {
-                    color: #2980b9;
-                    text-decoration: underline;
-                }
-                ul {
-                    background-color: #f8f9fa;
-                    padding: 20px;
-                    border-radius: 5px;
-                }
-                li {
-                    margin-bottom: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Stress Detection API</h1>
-            
-            <div class="nav-links">
-                <a href="/">Головна</a>
-                <a href="/analyse">Аналіз стресу</a>
-                <a href="/speedometer">Спідометр</a>
-                <a href="/docs-redirect">API Документація</a>
-            </div>
-            
-            <p>API для визначення рівня стресу на основі аналізу емоцій обличчя.</p>
-            <p>Доступні ендпоінти:</p>
-            <ul>
-                <li><strong>/predict/image</strong> - POST-запит для аналізу зображення</li>
-                <li><strong>/predict/base64</strong> - POST-запит для аналізу зображення в base64</li>
-                <li><strong>/predict/emotions</strong> - POST-запит для аналізу вектора емоцій</li>
-                <li><strong>/healthcheck</strong> - GET-запит для перевірки стану сервісу</li>
-                <li><strong>/model_info</strong> - GET-запит для отримання інформації про модель</li>
-            </ul>
-            
-            <p>Для перегляду детальної документації API відвідайте <a href="https://stress-detection-api-ym1t.onrender.com/docs#">документацію</a>.</p>
-        </body>
-    </html>
-    """)
+    return FileResponse("static/Default.html")
 
-# Перевірка, чи DeepFace працює правильно
+
+
+# check if Deepface works properly
 try:
-    # Створюємо фіктивне зображення для тесту
+    # Create dummy image for test
     dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
     dummy_result = DeepFace.analyze(img_path=dummy_img, actions=['emotion'], enforce_detection=False)
     print("DeepFace успішно ініціалізовано")
 except Exception as e:
-    print(f"Помилка при ініціалізації DeepFace: {str(e)}")
+    print(f"Error while initialize DeepFace: {str(e)}")
     import traceback
     print(traceback.format_exc())
 
 @app.on_event("startup")
 async def startup_event():
-    #global model, metadata
     global model_name, stress_model, model_metadata, feature_importance, learned_weights
     try:
-        print("Завантаження моделі при запуску...")
+        print("loading model while starting...")
         stress_model, feature_importance, learned_weights, model_metadata = load_weighted_model(model_name)
-        print("Модель успішно завантажена")
+        print("Model loaded successfuly")
     except Exception as e:
-        print(f"Помилка при завантаженні моделі: {str(e)}")
+        print(f"Error while loading model: {str(e)}")
         import traceback
         print(traceback.format_exc())
     
-    print("Перевірка DeepFace...")
+    print("Checking DeepFace...")
     try:
         import os
-        # Перевіряємо шлях до моделі
+        #Check model path
         model_path = os.path.join(os.path.expanduser('~'), '.deepface', 'weights', 'facial_expression_model_weights.h5')
         if os.path.isfile(model_path):
-            print(f"Модель DeepFace знайдена за шляхом {model_path}")
+            print(f"Model DeepFace was found by path {model_path}")
         else:
-            print(f"Модель DeepFace не знайдена за шляхом {model_path}")
-            # Альтернативний шлях
+            print(f"Model DeepFace was not found by path {model_path}")
+            # Alternative way
             if os.path.isfile("/root/.deepface/weights/efacial_expression_model_weights.h5"):
-                print("Модель знайдена за альтернативним шляхом")
+                print("Model was found by an alternative path")
             else:
-                print("Модель не знайдена за альтернативним шляхом")
+                print("Model was not found by an alternative path")
     except Exception as e:
-        print(f"Помилка при перевірці DeepFace: {e}")
+        print(f"Error while checking DeepFace: {e}")
 
 class EmotionVector(BaseModel):
     emotions: List[float]
@@ -203,52 +116,52 @@ class StressResponse(BaseModel):
 
 def generate_emotion_vector(image_data):
     """
-    Генерує вектор емоцій за допомогою моделі DeepFace.
+    Generate emotions vector with DeepFace model.
     """
     try:
-        # Конвертація масиву байтів у зображення
+        # Converts bytes array into image
         img = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         try:
             predictions = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False)
 
-            # Якщо результат - список, беремо перший елемент
+            # If list, take firs element
             if isinstance(predictions, list):
                 predictions = predictions[0]
 
             emotions = predictions["emotion"]
 
-            # Перелік усіх потрібних емоцій
+            # list of all necessary emotions
             all_emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral', 'contempt']
 
-            # Створюємо вектор з усіма емоціями, вставляючи 0 для відсутніх
+            # Create vector with all emotions, paste 0 for missing
             emotion_vector = [emotions.get(emotion, 0.0) for emotion in all_emotions]
             emotion_vector = np.array(emotion_vector, dtype=np.float32)
 
-            # Нормалізація, щоб сума ймовірностей дорівнювала 1
+            # noramlise, make the sum of probabilities equal to 1
             emotion_vector = emotion_vector / np.sum(emotion_vector)
 
             return emotion_vector
         except Exception as e:
             print(f"Помилка аналізу емоцій: {e}")
-            # Повертаємо дефолтний вектор емоцій у разі помилки
+            # Return default vector of emotins in error case
             default_vector = np.array([0.05, 0.05, 0.05, 0.1, 0.05, 0.05, 0.6, 0.05], dtype=np.float32)
             return default_vector
     except Exception as e:
-        print(f"Критична помилка при обробці зображення: {e}")
-        raise HTTPException(status_code=400, detail=f"Помилка при аналізі зображення: {str(e)}")
+        print(f"Critical error while proccesing image: {e}")
+        raise HTTPException(status_code=400, detail=f"error while proccesing image: {str(e)}")
 
 def calibrated_predict_with_model(emotion_vector):
     """
-    Виконує прогнозування рівня стресу на основі емоційного вектора.
+    Make stress level prediction besed on emotions vector.
 
     Args:
-        emotion_vector: Вектор емоцій (список або numpy array).
+        emotion_vector: emotions vector (list or numpy array).
 
     Returns:
-        predicted_class (str): Передбачений рівень стресу ('Low', 'Middle', 'High').
-        probabilities (dict): Ймовірності для кожного рівня стресу.
+        predicted_class (str): Predicted stress level ('Low', 'Middle', 'High').
+        probabilities (dict): Posibilities for every stress level.
     """
     global model_name, stress_model, model_metadata, feature_importance, learned_weights
     
@@ -262,12 +175,12 @@ def calibrated_predict_with_model(emotion_vector):
         outputs = stress_model(input_tensor)
         probabilities = torch.nn.functional.softmax(outputs, dim=1).cpu().numpy().flatten()
 
-    # Визначення рівня стресу за найбільшою ймовірністю
+    # Chose stress level with the biggest posibility
     stress_levels = ['Low', 'Middle', 'High']
     predicted_index = np.argmax(probabilities)
     predicted_class = stress_levels[predicted_index]
     
-    # Отримання метрик для цього класу стресу
+    # Get metrics for this stress class
     class_metrics = {}
     if model_metadata and 'metrics' in model_metadata:
         metrics = model_metadata['metrics']
@@ -275,7 +188,7 @@ def calibrated_predict_with_model(emotion_vector):
             if metric_name in metrics and predicted_class in metrics[metric_name]:
                 class_metrics[metric_name] = metrics[metric_name][predicted_class]
     
-    # Перетворення ймовірностей у словник
+    # Convert posibilities into dictionary
     prob_dict = {level: float(prob) for level, prob in zip(stress_levels, probabilities)}
 
     return predicted_class, prob_dict, float(probabilities[predicted_index]), class_metrics
@@ -286,17 +199,16 @@ class StressResponse(BaseModel):
     confidence: float
     metrics: Optional[dict] = None
 
-# Додайте цю функцію для зменшення розміру зображення перед обробкою
+# Make picture smaller before proceed
 def resize_image_if_needed(image, max_size=800):
     """
-    Зменшує розмір зображення, якщо воно завелике.
-    Це допомагає запобігти помилкам OOM (Out of Memory) на сервері.
+    Make picure smaller to avoid OOM (Out of Memory) errors on server.
     """
     width, height = image.size
     
-    # Перевіряємо, чи зображення завелике
+    # Check if picture too big
     if width > max_size or height > max_size:
-        # Обчислюємо новий розмір зі збереженням пропорцій
+        # Calculate new size with saving properties
         if width > height:
             new_width = max_size
             new_height = int(height * (max_size / width))
@@ -304,7 +216,7 @@ def resize_image_if_needed(image, max_size=800):
             new_height = max_size
             new_width = int(width * (max_size / height))
         
-        # Змінюємо розмір зображення
+        # Resize
         resized_image = image.resize((new_width, new_height), Image.LANCZOS)
         return resized_image
     
@@ -315,108 +227,80 @@ def resize_image_if_needed(image, max_size=800):
 @app.post("/predict/image")
 async def predict_image(file: UploadFile = File(...)):
     try:
-        # Додаємо інформацію про запит у логи
-        print(f"Отримано запит на аналіз зображення: {file.filename}, content_type: {file.content_type}")
+        # Add request info into logs
+        print(f"Request was got: {file.filename}, content_type: {file.content_type}")
         
         global model_name, stress_model, model_metadata, feature_importance, learned_weights
         
-        # Перевірте, чи модель стресу завантажена
+        # Check if model loaded
         if stress_model is None:
-            print("Завантаження моделі стресу...")
+            print("Loading stress model...")
             stress_model, feature_importance, learned_weights, model_metadata = load_weighted_model(model_name)
         
-        # Зчитуємо зображення
+        # Read image
         contents = await file.read()
         file_size = len(contents)
-        print(f"Зчитано {file_size} байтів даних")
+        print(f"Read {file_size} data bytes")
         
-        # Встановлюємо обмеження на розмір файлу (20 МБ)
-        max_file_size = 20 * 1024 * 1024  # 20 МБ у байтах
+        # Set file size limits (20 mb)
+        max_file_size = 20 * 1024 * 1024
         if file_size > max_file_size:
-            return {"status": "error", "detail": "Файл завеликий. Максимальний розмір - 20 МБ"}
+            return {"status": "error", "detail": "File is too big. Max size - 20 mb"}
         
-        # Декодуємо зображення
+        # Decode image
         try:
             image = Image.open(io.BytesIO(contents))
-            print(f"Зображення успішно декодовано, розмір: {image.size}, формат: {image.format}")
-            
-            # Зменшуємо розмір зображення, якщо воно завелике
-            max_image_size = 800  # Максимальний розмір сторони зображення
+            print(f"Image successfully decoded, size: {image.size}, format: {image.format}")
+
+            # Make image size lower
+            max_image_size = 800 
             image = resize_image_if_needed(image, max_image_size)
-            print(f"Розмір зображення після обробки: {image.size}")
+            print(f"Image size after processing: {image.size}")
             
-            # Виправлення орієнтації для мобільних фото
-            try:
-                for orientation in ExifTags.TAGS.keys():
-                    if ExifTags.TAGS[orientation] == 'Orientation':
-                        break
-                
-                exif = image._getexif()
-                if exif is not None and orientation in exif:
-                    if exif[orientation] == 2:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT)
-                    elif exif[orientation] == 3:
-                        image = image.transpose(Image.ROTATE_180)
-                    elif exif[orientation] == 4:
-                        image = image.transpose(Image.FLIP_TOP_BOTTOM)
-                    elif exif[orientation] == 5:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
-                    elif exif[orientation] == 6:
-                        image = image.transpose(Image.ROTATE_270)
-                    elif exif[orientation] == 7:
-                        image = image.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_270)
-                    elif exif[orientation] == 8:
-                        image = image.transpose(Image.ROTATE_90)
-                
-                print("Орієнтацію зображення перевірено та виправлено за потреби")
-            except Exception as e:
-                print(f"Помилка при виправленні орієнтації: {str(e)}")
-            
-            # Конвертуємо в RGB, якщо потрібно
+            # Convert into RGB if needed
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-                print(f"Зображення конвертовано в RGB режим")
+                print(f"Image converted into RGB")
             
-            # Перетворюємо на масив numpy
+            # Convert into numpy array
             img_array = np.array(image)
-            print(f"Зображення перетворено на масив numpy, форма: {img_array.shape}")
+            print(f"Image convert into numpy array, form: {img_array.shape}")
             
-            # Тут виклик функції аналізу емоцій
-            print("Викликаємо функцію аналізу емоцій...")
+            print("Call emotion analysis function...")
             
-            # Обробляємо виняткові ситуації з DeepFace
+            # Process exceptional situations with DeepFace
             try:
                 emotions_result = DeepFace.analyze(img_path=img_array, actions=['emotion'], enforce_detection=False)
-                print(f"DeepFace успішно проаналізував зображення")
+                print(f"DeepFace process image successfuly")
             except Exception as deepface_error:
-                print(f"Помилка при першій спробі аналізу DeepFace: {str(deepface_error)}")
+                print(f"Error on the first try to analyse DeepFace: {str(deepface_error)}")
                 
-                # Спробуємо покращити зображення та повторити аналіз
+                # Try to enchance and rerty analysis
                 try:
-                    # Перетворюємо в сірий колір і нормалізуємо
+                    # Convert into grayscale and normalise
                     gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
                     normalized = cv2.equalizeHist(gray)
                     enhanced = cv2.cvtColor(normalized, cv2.COLOR_GRAY2RGB)
                     
-                    print("Зображення покращено для розпізнавання обличчя")
+                    print("Image enhanced for face recognition")
                     emotions_result = DeepFace.analyze(img_path=enhanced, actions=['emotion'], enforce_detection=False)
-                    print("DeepFace успішно проаналізував покращене зображення")
+                    print("DeepFace successfully analyses enhanced image")
                 except Exception as enhanced_error:
-                    print(f"Помилка при аналізі покращеного зображення: {str(enhanced_error)}")
-                    return {"status": "error", "detail": "Не вдалося виявити обличчя на зображенні. Будь ласка, спробуйте інше фото."}
+                    print(f"Error when analysing an enhanced image: {str(enhanced_error)}")
+                    return {"status": "error", "detail": "The face in the image could not be detected. Please try another photo."}
             
-            # Отримання емоцій у потрібному форматі для моделі стресу
+            # Get emotions in the correct format for the stress model
             emotions = {}
             if isinstance(emotions_result, list):
                 if len(emotions_result) == 0:
-                    return {"status": "error", "detail": "Обличчя не знайдено на зображенні"}
+                    return {"status": "error", "detail": "Face was not found"}
                 emotions = emotions_result[0]['emotion']
             else:
                 emotions = emotions_result['emotion']
             
-            print(f"Результат аналізу емоцій: {emotions}")
+            print(f"Emotion analysis result: {emotions}")
             
-            # Підготовка вхідних даних для моделі стресу
+            # Prepare input data for the stress model
             input_features = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral", "contempt"]
             input_values = []
             for feature in input_features:
@@ -425,201 +309,56 @@ async def predict_image(file: UploadFile = File(...)):
                 else:
                     input_values.append(emotions.get(feature, 0))
             
-            # Нормалізуємо значення
+            # Normalise value
             sum_values = sum(input_values)
             if sum_values > 0:
                 input_values = [v / sum_values for v in input_values]
             
-            # Прогнозування стресу
-            print("Викликаємо функцію аналізу стресу...")
+            # Predict stress
+            print("Call the stress analysis function...")
             
-            # Перетворення на тензор
+            # Convert to a tensor
             input_tensor = torch.tensor([input_values], dtype=torch.float32)
             
-            # Прогнозування
+            # Predict
             with torch.no_grad():
                 stress_output = stress_model(input_tensor)
                 
-            # Перетворення результату
+            # Convert results
             stress_probabilities = torch.softmax(stress_output, dim=1).numpy()[0]
             stress_classes = ["Low", "Middle", "High"]
             stress_result = {stress_classes[i]: float(stress_probabilities[i]) for i in range(len(stress_classes))}
             
-            # Визначення найбільш ймовірного класу стресу
+            # Determining the most likely stress class
             predicted_stress = stress_classes[np.argmax(stress_probabilities)]
             
-            # Формування результату
+            # Form result
             result = {
                 "emotions": emotions,
                 "stress_probabilities": stress_result,
                 "predicted_stress": predicted_stress
             }
             
-            print(f"Результат аналізу стресу: {predicted_stress}")
+            print(f"Stress analysis result: {predicted_stress}")
             
-            # Результат
+            # Result
             return {"status": "success", "result": result}
             
         except Exception as image_error:
-            print(f"Помилка при обробці зображення: {str(image_error)}")
-            return {"status": "error", "detail": f"Помилка при обробці зображення: {str(image_error)}"}
+            print(f"Image processing error: {str(image_error)}")
+            return {"status": "error", "detail": f"Image processing error: {str(image_error)}"}
             
     except Exception as e:
-        print(f"Загальна помилка при аналізі зображення: {str(e)}")
+        print(f"General image analysis error: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return {"status": "error", "detail": str(e)}
 
-@app.post("/predict/base64", response_model=StressResponse)
-async def predict_from_base64(base64_image: str = Form(...)):
-    """
-    Прогнозування рівня стресу на основі зображення у форматі base64.
-    """
-    global model_name, stress_model, model_metadata, feature_importance, learned_weights
-    try:
-        # Декодування base64 у бінарні дані
-        image_data = base64.b64decode(base64_image)
-        emotion_vector = generate_emotion_vector(image_data)
-        
-        stress_level, probabilities, confidence = calibrated_predict_with_model(emotion_vector)
-        
-        return {
-            "stress_level": stress_level,
-            "probabilities": probabilities,
-            "confidence": confidence
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/predict/emotions", response_model=StressResponse)
-async def predict_from_emotions(emotion_data: EmotionVector):
-    """
-    Прогнозування рівня стресу на основі вектора емоцій.
-    """
-    try:
-        global model_name, stress_model, model_metadata, feature_importance, learned_weights
-        # Перевірити, чи модель завантажена
-        if stress_model is None:
-            print("Модель не завантажена, спроба завантажити...")
-            stress_model, feature_importance, learned_weights, model_metadata = load_weighted_model(model_name)
-            if stress_model is None:
-                raise HTTPException(status_code=500, detail="Не вдалося завантажити модель стресу")
-            
-        emotions = np.array(emotion_data.emotions, dtype=np.float32)
-        
-        if len(emotions) != 8:
-            raise HTTPException(
-                status_code=400, 
-                detail="Вектор емоцій повинен містити 8 значень (angry, disgust, fear, happy, sad, surprise, neutral, contempt)"
-            )
-        
-        # Нормалізація вектора емоцій
-        if np.sum(emotions) > 0:
-            emotions = emotions / np.sum(emotions)
-        
-        stress_level, probabilities, confidence = calibrated_predict_with_model(emotions)
-        
-        return {
-            "stress_level": stress_level,
-            "probabilities": probabilities,
-            "confidence": confidence
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/healthcheck")
 async def healthcheck():
     """
-    Перевірка стану API.
+    API state check.
     """
     global model_name, stress_model, model_metadata
     return {"status": "ok", "model_loaded": stress_model is not None}
-
-@app.get("/model_info")
-async def get_model_info():
-    try:
-        global model_name, stress_model, model_metadata
-        
-        print("Спроба отримати інформацію про модель...")
-        
-        # Спершу перевірте, чи модель вже завантажена
-        if stress_model is None:
-            # Завантажте модель, якщо вона ще не завантажена
-            stress_model, _, _, model_metadata = load_weighted_model(model_name)
-        
-        # Створіть об'єкт model_info
-        model_info = {
-            "model_type": model_metadata.get("model_type", "StressDetectionNN"),
-            "input_features": model_metadata.get("input_features", []),
-            "metrics": model_metadata.get("metrics", {}),
-            "date_saved": model_metadata.get("date_saved", "N/A")
-        }
-        
-        return {"status": "success", "model_info": model_info}
-    except Exception as e:
-        print(f"Помилка при отриманні інформації про модель: {str(e)}")
-        import traceback
-        print(traceback.format_exc())
-        # Повертаємо помилку з кодом 500, а не 200
-        return {"status": "error", "message": str(e)}, 500
-
-@app.get("/model_metrics")
-async def model_metrics():
-    """
-    Надає детальні метрики продуктивності моделі.
-    """
-    global stress_model, model_metadata
-    if stress_model is None:
-        raise HTTPException(status_code=500, detail="Модель не завантажена")
-    
-    if not model_metadata or 'metrics' not in model_metadata:
-        raise HTTPException(status_code=404, detail="Метрики моделі не знайдено")
-    
-    return {
-        "model_name": model_name,
-        "metrics": model_metadata.get('metrics', {}),
-        "date_saved": model_metadata.get('date_saved', 'невідома')
-    }
-
-@app.get("/model_performance/roc_curve")
-async def roc_curve():
-    """
-    Повертає дані для побудови ROC кривої моделі.
-    """
-    global stress_model, model_metadata
-    if stress_model is None:
-        raise HTTPException(status_code=500, detail="Модель не завантажена")
-    
-    # В реальному випадку тут би ви завантажували дані для ROC кривої
-    # Для демонстрації створюємо приблизні дані
-    
-    # ROC крива для кожного класу
-    roc_data = {
-        "Low": {
-            "fpr": [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-            "tpr": [0.0, 0.4, 0.6, 0.7, 0.8, 0.85, 0.9, 0.92, 0.95, 0.97, 0.99, 1.0],
-            "auc": 0.82
-        },
-        "Middle": {
-            "fpr": [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-            "tpr": [0.0, 0.3, 0.5, 0.65, 0.75, 0.8, 0.85, 0.87, 0.9, 0.95, 0.98, 1.0],
-            "auc": 0.78
-        },
-        "High": {
-            "fpr": [0.0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-            "tpr": [0.0, 0.35, 0.55, 0.7, 0.78, 0.82, 0.87, 0.9, 0.93, 0.96, 0.98, 1.0],
-            "auc": 0.81
-        }
-    }
-
-    return roc_data
-
-if __name__ == "__main__":
-    import uvicorn
-    
-    # Визначення порту з env змінної (для render.com) або використання 8000 за замовчуванням
-    port = int(os.environ.get("PORT", 8000))
-    
-    uvicorn.run(app, host="0.0.0.0", port=port)

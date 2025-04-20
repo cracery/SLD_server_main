@@ -1,0 +1,68 @@
+ <html>
+        <head>
+            <title>Stress level detect</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                h1 {
+                    color: #2c3e50;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 10px;
+                }
+                .nav-links {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                }
+                .nav-links a {
+                    display: inline-block;
+                    margin-right: 15px;
+                    text-decoration: none;
+                    color: #3498db;
+                    font-weight: bold;
+                }
+                .nav-links a:hover {
+                    color: #2980b9;
+                    text-decoration: underline;
+                }
+                ul {
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 5px;
+                }
+                li {
+                    margin-bottom: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Stress Detection API</h1>
+            
+            <div class="nav-links">
+                <a href="/">Головна</a>
+                <a href="/analyse">Аналіз стресу</a>
+                <a href="/speedometer">Спідометр</a>
+                <a href="/docs-redirect">API Документація</a>
+            </div>
+            
+            <p>API для визначення рівня стресу на основі аналізу емоцій обличчя.</p>
+            <p>Доступні ендпоінти:</p>
+            <ul>
+                <li><strong>/predict/image</strong> - POST-запит для аналізу зображення</li>
+                <li><strong>/predict/base64</strong> - POST-запит для аналізу зображення в base64</li>
+                <li><strong>/predict/emotions</strong> - POST-запит для аналізу вектора емоцій</li>
+                <li><strong>/healthcheck</strong> - GET-запит для перевірки стану сервісу</li>
+                <li><strong>/model_info</strong> - GET-запит для отримання інформації про модель</li>
+            </ul>
+            
+        </body>
+    </html>
+    """)
