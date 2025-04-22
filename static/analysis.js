@@ -1,4 +1,4 @@
-/* ---------- Константи, потрібні лише для обробки результатів ---------- */
+/* Const needed for processing results */
 const emotionColors = {
     angry: "#dc3545",
     disgust: "#6f42c1",
@@ -10,17 +10,17 @@ const emotionColors = {
     contempt: "#343a40"
 };
 const emotionNames = {
-    angry: "Злість",
-    disgust: "Відраза",
-    fear: "Страх",
-    happy: "Радість",
-    sad: "Смуток",
-    surprise: "Здивування",
-    neutral: "Нейтральність",
-    contempt: "Презирство"
+    angry: "Angry",
+    disgust: "Disgust",
+    fear: "Fear",
+    happy: "Happy",
+    sad: "Sad",
+    surprise: "Surprise",
+    neutral: "Neutral",
+    contempt: "Contempt"
 };
 
-/* ---------- API‑запит і візуалізація ---------- */
+/* Request and visualyse */
 async function analyzeImage(file) {
     showLoading();
     hideError();
@@ -39,43 +39,41 @@ async function analyzeImage(file) {
         const data = await res.json();
         displayResults(data);
     } catch (err) {
-        showError("Помилка при аналізі зображення. Переконайтеся, що на зображенні є обличчя і спробуйте ще раз.");
+        showError("An error occurred during image analysis. Make sure there is a face in the image and try again.");
         console.error(err);
     } finally {
         hideLoading();
     }
 }
 
-/* ---------- Опрацювання та показ результатів ---------- */
+/* proceed and show results */
 function displayResults(data) {
     if (data.status !== "success" || !data.result) {
-        showError("Не вдалося отримати результати аналізу.");
+        showError("The analysis results could not be obtained.");
         return;
     }
 
     const { stress_probabilities: p, predicted_stress: lvl, emotions } = data.result;
     const low = p.Low * 100, mid = p.Middle * 100, high = p.High * 100;
 
-    /* Спідометр */
+    /* Stressometer */
     const value = low * 16.5 + mid * 49.5 + high * 83;
     gauge.set(value / 100);
 
     let lbl, cls;
     switch (lvl) {
-        case "Low":    lbl = "Низький рівень стресу"; cls = "text-success"; break;
-        case "Middle": lbl = "Середній рівень стресу"; cls = "text-warning"; break;
-        case "High":   lbl = "Високий рівень стресу";  cls = "text-danger";  break;
-        default:       lbl = "Невизначений рівень";    cls = "text-secondary";
+        case "Low":    lbl = "Low stress level"; cls = "text-success"; break;
+        case "Middle": lbl = "Middle stress level"; cls = "text-warning"; break;
+        case "High":   lbl = "High stress level";  cls = "text-danger";  break;
+        default:       lbl = "Unknown level";    cls = "text-secondary";
     }
     stressLevelLabel.innerHTML = lbl;
     stressLevelLabel.className = `gauge-label ${cls}`;
 
-    /* Прогрес‑бари */
     updateBar("low", low);
     updateBar("middle", mid);
     updateBar("high", high);
 
-    /* Емоції */
     updateEmotionCharts(emotions);
     showResults();
 }
@@ -105,7 +103,7 @@ function updateEmotionCharts(raw) {
     });
 }
 
-/* ---------- Допоміжне ---------- */
+/*Additional */
 function updateBar(which, val) {
     document.getElementById(`${which}-stress-bar`).style.width  = `${val.toFixed(1)}%`;
     document.getElementById(`${which}-stress-value`).textContent = `${val.toFixed(1)}%`;
