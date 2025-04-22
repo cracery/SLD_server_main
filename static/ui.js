@@ -1,4 +1,4 @@
-/* ---------- Захоплюємо DOM ---------- */
+/* Capture DOM */
 const dropArea  = document.getElementById("drop-area");
 const fileInput = document.getElementById("file-input");
 const imagePrev = document.getElementById("image-preview");
@@ -9,7 +9,7 @@ const errText   = document.getElementById("error-text");
 const results   = document.getElementById("results-container");
 const stressLevelLabel = document.getElementById("stress-level-label");
 
-/* ---------- Gauge ---------- */
+/* Gauge */
 const gauge = new Gauge(document.getElementById("speedometer")).setOptions({
     angle: 0.15,
     lineWidth: 0.44,
@@ -31,7 +31,7 @@ gauge.maxValue = 100;
 gauge.setMinValue(0);
 gauge.set(0);
 
-/* ---------- Drag & Drop ---------- */
+/* Drag & Drop*/
 ["dragenter","dragover","dragleave","drop"].forEach(ev =>
     dropArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); })
 );
@@ -50,7 +50,7 @@ fileInput.addEventListener("change", () => {
     if (fileInput.files.length) handleFile(fileInput.files[0]);
 });
 
-/* ---------- Обробка файлу ---------- */
+/* Process image */
 function handleFile(file) {
     if (!file.type.match("image.*")) { showError("Будь ласка, виберіть файл‑зображення."); return; }
     resetResults();
@@ -64,17 +64,17 @@ function handleFile(file) {
     reader.readAsDataURL(file);
 }
 
-/* ---------- Кнопка «Аналізувати» ---------- */
+/* Analyse button */
 analyzeBtn.addEventListener("click", () => {
-    if (!fileInput.files.length) { showError("Спочатку виберіть зображення."); return; }
-    analyzeImage(fileInput.files[0]);   // функція з analysis.js
+    if (!fileInput.files.length) { showError("First, select an image."); return; }
+    analyzeImage(fileInput.files[0]);
 });
 
-/* ---------- Additional UI ---------- */
+/* Additional */
 function resetResults() {
     results.classList.remove("results-visible");
     gauge.set(0);
-    stressLevelLabel.textContent = "Аналіз…";
+    stressLevelLabel.textContent = "Analyse…";
     stressLevelLabel.className = "gauge-label text-secondary";
     ["low","middle","high"].forEach(x => updateBar(x, 0));
     document.getElementById("emotions-container").innerHTML = "";
