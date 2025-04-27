@@ -124,7 +124,7 @@ def load_weighted_model(model_name):
         else:
             print(f"Metadata file not found at path {metadata_path}")
         
-        # Переводимо модель в режим оцінки
+        # put into evaluation mode
         model.eval()
         print("Model successfully loaded and put into evaluation mode")
         return model, feature_importance, learned_weights, metadata
