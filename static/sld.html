@@ -19,7 +19,10 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Uploading an image</h5>
-                <span class="badge bg-success rounded-pill"><i class="fas fa-camera me-1"></i>Image</span>
+                <button type="button" class="btn btn-info rounded-pill" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                    <i class="fas fa-info-circle me-1"></i>About
+                </button>
+
             </div>
             <div class="card-body">
                 <div class="upload-area" id="drop-area">
@@ -129,7 +132,24 @@
 
     <script src="/static/analysis.js" defer></script>
     <script src="/static/ui.js" defer></script>
-<div class="text-center mt-5 mb-4">
+    <!-- Модальне вікно About -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="aboutModalLabel">About SLD</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+          </div>
+          <div class="modal-body">
+            SLD – це система для аналізу рівня стресу за виразом обличчя. Ви можете завантажити фотографію та отримати оцінку емоційного стану.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-5 mb-4">
     <img src="/static/QR_SLD_1.png" alt="QR-код" style="max-width: 200px; height: auto;" class="img-fluid shadow rounded">
 </div>
 </body>
