@@ -43,9 +43,6 @@ except RuntimeError:
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_root():
-    """
-    returns sld.html when goes to root "/"
-    """
     return FileResponse("static/sld.html")
 
 @app.get("/sld", response_class=HTMLResponse)
@@ -137,7 +134,7 @@ def generate_emotion_vector(img_data):
         
 
         except Exception as e:
-            print(f"Помилка аналізу емоцій: {e}")
+            print(f"Emotions analysis error: {e}")
             default_vector = np.array([0.05, 0.05, 0.05, 0.1, 0.05, 0.05, 0.6, 0.05], dtype=np.float32)
             return default_vector
     except Exception as e:
@@ -151,7 +148,7 @@ def calibrated_predict_with_model(emot_vector):
     global model_name, stress_model, model_metad, ftr_importance, learned_wghts
     
     if stress_model is None:
-        raise HTTPException(status_code=500, detail="Модель не завантажена")
+        raise HTTPException(status_code=500, detail="model is not loaded")
     
     stress_model.eval()
     input_tensor = torch.tensor(emot_vector, dtype=torch.float32).unsqueeze(0)
@@ -174,7 +171,7 @@ def calibrated_predict_with_model(emot_vector):
                 class_metrics[metric_name] = metrics[metric_name][pred_class]
     
     prob_dict = {level: float(prob) for level, prob in zip(stress_levles, probs)}
-    return pred_class, prob_dict, float(probs[pred_index]), class_metrics
+    return pred_class,prob_dict,float(probs[pred_index]), class_metrics
 
 class Stress_respo(BaseModel):
     stress_level: str
@@ -200,6 +197,7 @@ def resize_img(img, max_size=800):
         return resized_img
     
     return img
+
 
 @app.post("/predict/image")
 async def predict_image(file: UploadFile = File(...)):
@@ -288,10 +286,8 @@ async def predict_image(file: UploadFile = File(...)):
             if sum_values > 0:
                 input_values = [v / sum_values for v in input_values]
             
-
             print("Call the stress analysis function...")
             
-
             input_tensor = torch.tensor([input_values], dtype=torch.float32)
             
             with torch.no_grad():
@@ -320,8 +316,7 @@ async def predict_image(file: UploadFile = File(...)):
         import traceback
         print(traceback.format_exc())
         return {"status": "error", "detail": str(e)}
-
-
+    
 @app.get("/healthcheck")
 async def healthcheck():
     global model_name, stress_model, model_metad
