@@ -14,9 +14,7 @@ from pydantic import BaseModel
 import cv2
 from deepface import DeepFace
 
-
 from model_loader import load_weighted_model
-
 
 stress_model = None
 model_metadata = None
