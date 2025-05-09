@@ -51,6 +51,10 @@ async def serve_speedometer():
 @app.get("/camera", response_class=HTMLResponse)
 async def serve_camera():
     return FileResponse("static/camera.html")
+@app.get("/camera.js")
+async def serve_camera_js():
+    return FileResponse("static/camera.js", headers={"Cache-Control": "no-cache"})
+
 def default_html_response():
     """
     returns default, if file not found
