@@ -21,8 +21,19 @@ const emotionNames = {
 };
 
 /* Analyse button */
-document.getElementById("analyze-btn").addEventListener("click", () => {
-    const preview = document.getElementById("image-preview");
+document.addEventListener("DOMContentLoaded", () => {
+  const analyzeBtn = document.getElementById("analyze-btn");
+  const preview = document.getElementById("image-preview");
+
+  console.log("Binding Analyse button...", analyzeBtn);
+
+  if (!analyzeBtn) {
+    console.warn("❌ analyse-btn not found!");
+    return;
+  }
+
+  analyzeBtn.addEventListener("click", () => {
+    console.log("✅ Analyse button clicked");
     if (preview && preview.dataset.fromCamera === "true") {
         analyzeCapturedImage();
     } else {
@@ -33,6 +44,7 @@ document.getElementById("analyze-btn").addEventListener("click", () => {
         }
         analyzeImage(fileInput.files[0]);
     }
+  });
 });
 
 /* Analyze uploaded image */
