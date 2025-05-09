@@ -1,4 +1,4 @@
-/* Const needed for results */
+/* Const needed for processing results */
 const emotionColors = {
     angry: "#dc3545",
     disgust: "#6f42c1",
@@ -21,31 +21,15 @@ const emotionNames = {
 };
 
 /* Analyse button */
-document.addEventListener("DOMContentLoaded", () => {
-  const analyzeBtn = document.getElementById("analyze-btn");
-  const preview = document.getElementById("image-preview");
-
-  console.log("Binding Analyse button...", analyzeBtn);
-
-  if (!analyzeBtn) {
-    console.warn("❌ analyse-btn not found!");
-    return;
-  }
-
-  analyzeBtn.addEventListener("click", () => {
-    console.log("✅ Analyse button clicked");
-    if (preview && preview.dataset.fromCamera === "true") {
-        analyzeCapturedImage();
-    } else {
-        const fileInput = document.getElementById("file-input");
-        if (!fileInput || !fileInput.files.length) {
-            showError("First, select or capture an image.");
+document.getElementById("analyze-btn").addEventListener("click", () => {
+    const fileInput = document.getElementById("file-input");
+    if (!fileInput || !fileInput.files.length) {
+        showError("First, select or capture an image.");
             return;
         }
         analyzeImage(fileInput.files[0]);
     }
-  });
-});
+);
 
 /* Analyze uploaded image */
 async function analyzeImage(file) {
@@ -71,39 +55,6 @@ async function analyzeImage(file) {
     }
 }
 
-/* Analyze captured image from camera */
-async function analyzeCapturedImage() {
-    const preview = document.getElementById("image-preview");
-    console.log("Analyzing captured photo:", preview?.fileBlob);
-
-    if (!preview || !preview.fileBlob) {
-        showError("No captured photo found.");
-        return;
-    }
-
-    showLoading();
-    hideError();
-    resetResults();
-
-    const formData = new FormData();
-    formData.append("file", preview.fileBlob, "captured.jpg");
-
-    try {
-        const res = await fetch(
-            "https://stress-detection-api-production.up.railway.app/predict/image",
-            { method: "POST", body: formData }
-        );
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        displayResults(data);
-    } catch (err) {
-        showError("An error occurred during camera image analysis. Make sure your face is visible and try again.");
-        console.error(err);
-    } finally {
-        hideLoading();
-    }
-}
 
 /* proceed and show results */
 function displayResults(data) {
@@ -161,6 +112,7 @@ function updateEmotionCharts(raw) {
         `);
     });
 }
+
 /* Additional */
 function updateBar(which, val) {
     document.getElementById(`${which}-stress-bar`).style.width  = `${val.toFixed(1)}%`;
