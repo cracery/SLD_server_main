@@ -17,8 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   captureBtn.addEventListener('click', () => {
     console.log("Camera script loaded");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;    
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
 
     canvas.toBlob(blob => {
       console.log("Capturing image from video...");
@@ -27,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preview.src = URL.createObjectURL(file);
       preview.style.display = 'block';
 
-      // Зберігаємо файл у preview для подальшої обробки
+      // save to preview
       preview.fileBlob = file;
       preview.dataset.fromCamera = "true";
       console.log("Saved to preview:", file);
