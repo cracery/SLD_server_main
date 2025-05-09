@@ -61,17 +61,21 @@ async function analyzeImage(file) {
 
 /* Analyze captured image from camera */
 async function analyzeCapturedImage() {
-    console.log("Analyzing captured photo:", preview.fileBlob);
     const preview = document.getElementById("image-preview");
+    console.log("Analyzing captured photo:", preview?.fileBlob);
+
     if (!preview || !preview.fileBlob) {
         showError("No captured photo found.");
         return;
     }
+
     showLoading();
     hideError();
     resetResults();
+
     const formData = new FormData();
     formData.append("file", preview.fileBlob, "captured.jpg");
+
     try {
         const res = await fetch(
             "https://stress-detection-api-production.up.railway.app/predict/image",
