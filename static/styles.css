@@ -85,6 +85,13 @@ body {
     margin: 0 auto;
     position: relative;
 }
+#image-preview {
+  display: none;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
 .gauge-label {
     position: absolute;
     bottom: 15px;
