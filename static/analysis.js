@@ -61,6 +61,7 @@ async function analyzeImage(file) {
 
 /* Analyze captured image from camera */
 async function analyzeCapturedImage() {
+    console.log("Analyzing captured photo:", preview.fileBlob);
     const preview = document.getElementById("image-preview");
     if (!preview || !preview.fileBlob) {
         showError("No captured photo found.");
