@@ -48,7 +48,9 @@ async def serve_root():
 @app.get("/sld", response_class=HTMLResponse)
 async def serve_speedometer():
     return FileResponse("static/sld.html")
-
+@app.get("/camera", response_class=HTMLResponse)
+async def serve_camera():
+    return FileResponse("static/camera.html")
 def default_html_response():
     """
     returns default, if file not found
