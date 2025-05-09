@@ -1,4 +1,4 @@
-/* Const needed for processing results */
+/* Const needed for results */
 const emotionColors = {
     angry: "#dc3545",
     disgust: "#6f42c1",
@@ -20,26 +20,68 @@ const emotionNames = {
     contempt: "Contempt"
 };
 
-/* Request and visualyse */
+/* Analyse button */
+document.getElementById("analyze-btn").addEventListener("click", () => {
+    const preview = document.getElementById("image-preview");
+    if (preview && preview.dataset.fromCamera === "true") {
+        analyzeCapturedImage();
+    } else {
+        const fileInput = document.getElementById("file-input");
+        if (!fileInput || !fileInput.files.length) {
+            showError("First, select or capture an image.");
+            return;
+        }
+        analyzeImage(fileInput.files[0]);
+    }
+});
+
+/* Analyze uploaded image */
 async function analyzeImage(file) {
     showLoading();
     hideError();
     resetResults();
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
         const res = await fetch(
             "https://stress-detection-api-production.up.railway.app/predict/image",
             { method: "POST", body: formData }
         );
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         displayResults(data);
     } catch (err) {
         showError("An error occurred during image analysis. Make sure there is a face in the image and try again.");
+        console.error(err);
+    } finally {
+        hideLoading();
+    }
+}
+
+/* Analyze captured image from camera */
+async function analyzeCapturedImage() {
+    const preview = document.getElementById("image-preview");
+    if (!preview || !preview.fileBlob) {
+        showError("No captured photo found.");
+        return;
+    }
+    showLoading();
+    hideError();
+    resetResults();
+    const formData = new FormData();
+    formData.append("file", preview.fileBlob, "captured.jpg");
+    try {
+        const res = await fetch(
+            "https://stress-detection-api-production.up.railway.app/predict/image",
+            { method: "POST", body: formData }
+        );
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        displayResults(data);
+    } catch (err) {
+        showError("An error occurred during camera image analysis. Make sure your face is visible and try again.");
         console.error(err);
     } finally {
         hideLoading();
@@ -56,7 +98,7 @@ function displayResults(data) {
     const { stress_probabilities: p, predicted_stress: lvl, emotions } = data.result;
     const low = p.Low * 100, mid = p.Middle * 100, high = p.High * 100;
 
-    /* Stressometer */
+    /* Stressometer */
     const value = low * 16.5 + mid * 49.5 + high * 83;
     gauge.set(value / 100);
 
@@ -102,8 +144,7 @@ function updateEmotionCharts(raw) {
         `);
     });
 }
-
-/*Additional */
+/* Additional */
 function updateBar(which, val) {
     document.getElementById(`${which}-stress-bar`).style.width  = `${val.toFixed(1)}%`;
     document.getElementById(`${which}-stress-value`).textContent = `${val.toFixed(1)}%`;

@@ -69,7 +69,6 @@ analyzeBtn.addEventListener("click", () => {
     if (!fileInput.files.length) { showError("First, select an image."); return; }
     analyzeImage(fileInput.files[0]);
 });
-
 /* Additional */
 function resetResults() {
     results.classList.remove("results-visible");

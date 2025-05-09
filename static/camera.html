@@ -23,34 +23,24 @@
             <i class="fas fa-camera me-1"></i> Camera
           </a>
         </div>
+        
         <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Uploading an image</h5>
-                <button type="button" class="btn btn-info rounded-pill" data-bs-toggle="modal" data-bs-target="#aboutModal">
-                    <i class="fas fa-info-circle me-1"></i>About
-                </button>
-
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-camera me-2"></i>Use camera</h5>
+              <button type="button" class="btn btn-info rounded-pill" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                  <i class="fas fa-info-circle me-1"></i>About
+              </button>
+          </div>
+          <div class="card-body text-center">
+            <video id="video" autoplay playsinline style="width: 100%; max-width: 520px; border-radius: 8px;"></video><br/>
+            <button id="capture-btn" class="btn btn-secondary mt-2"><i class="fas fa-camera me-1"></i>Capture</button>
+            <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+            <img id="image-preview" class="img-fluid mt-3" alt="Captured Image" style="display:none;" />
+            <div class="text-center mt-3">
+              <button id="analyze-btn" class="btn btn-primary"><i class="fas fa-search me-2"></i>Analyse</button>
             </div>
-            <div class="card-body">
-                <div class="upload-area" id="drop-area">
-                    <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
-                    <p class="mb-2"><i class="fas fa-image me-2"></i>Drag & drop an image here or click to select a file</p>
-                    <p class="text-muted small"><i class="fas fa-info-circle me-1"></i>Supported formats: JPEG, PNG, GIF</p>
-                    <input type="file" id="file-input" accept="image/*">
-                </div>
-                
-                <div class="text-center mt-3">
-                    <img id="image-preview" class="img-fluid" alt="Image preview">
-                </div>
-                
-                <div class="text-center mt-3">
-                    <button id="analyze-btn" class="btn btn-primary" disabled>
-                        <i class="fas fa-search me-2"></i>Analyse
-                    </button>
-                </div>
-            </div>
+          </div>
         </div>
-
 
         
         <div id="loading" class="text-center my-4 d-none">
@@ -139,7 +129,9 @@
 
     <script src="/static/analysis.js" defer></script>
     <script src="/static/ui.js" defer></script>
-    <!-- Модальне вікно About -->
+    <script src="/static/camera.js" defer></script>
+
+    <!-- About -->
     <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
