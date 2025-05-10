@@ -43,7 +43,7 @@ except RuntimeError:
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_root():
-    return FileResponse("static/sld.html")
+    return FileResponse("static/camera.html")
 
 @app.get("/sld", response_class=HTMLResponse)
 async def serve_speedometer():
