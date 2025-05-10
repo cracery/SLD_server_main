@@ -14,14 +14,14 @@ class FeatureWeightedNN(nn.Module):
             # Normalise importance of features
             if isinstance(ftr_importance, np.ndarray):
                 norm_importance= ftr_importance / np.max(ftr_importance) if np.max(ftr_importance) > 0 else ftr_importance
-                self.ftr_weights= nn.Parameter(
+                self.feature_weights= nn.Parameter(
                     torch.tensor(norm_importance, dtype=torch.float32).view(1, -1),
                     requires_grad=True
                 )
             else:
-                self.ftr_weights= nn.Parameter(torch.ones(1, input_dim), requires_grad=True)
+                self.feature_weights= nn.Parameter(torch.ones(1, input_dim), requires_grad=True)
         else:
-            self.ftr_weights= nn.Parameter(torch.ones(1, input_dim), requires_grad=True)
+            self.feature_weights= nn.Parameter(torch.ones(1, input_dim), requires_grad=True)
 
         # Main architecture
         self.model = nn.Sequential(
@@ -45,7 +45,7 @@ class FeatureWeightedNN(nn.Module):
         )
 
     def forward(self, x):
-        weighted_x= x * self.ftr_weights
+        weighted_x= x * self.feature_weights
         return self.model(weighted_x)
     
 def load_weighted_model(model_name):
