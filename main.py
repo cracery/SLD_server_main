@@ -40,11 +40,9 @@ try:
     app.mount("/static", StaticFiles(directory="static"), name="static")
 except RuntimeError:
     pass
-
 @app.get("/", response_class=HTMLResponse)
 async def serve_root():
     return FileResponse("static/camera.html")
-
 @app.get("/sld", response_class=HTMLResponse)
 async def serve_speedometer():
     return FileResponse("static/sld.html")
@@ -54,14 +52,8 @@ async def serve_camera():
 @app.get("/camera.js")
 async def serve_camera_js():
     return FileResponse("static/camera.js", headers={"Cache-Control": "no-cache"})
-
-def default_html_response():
-    """
-    returns default, if file not found
-    """
+def default_html_respo():
     return FileResponse("static/Default.html")
-
-
 
 # check if Deepface works properly
 try:
@@ -88,13 +80,13 @@ async def startup_event():
     print("Checking DeepFace...")
     try:
         import os
-
-        model_path = os.path.join(os.path.expanduser('~'), '.deepface', 'weights', 'facial_expression_model_weights.h5')
+        model_path=os.path.join(os.path.expanduser('~'), '.deepface', 'weights', 'facial_expression_model_weights.h5')
         if os.path.isfile(model_path):
             print(f"Model DeepFace was found by path {model_path}")
         else:
             print(f"Model DeepFace was not found by path {model_path}")
-            # Alternative way
+            
+            #Alternative way
             if os.path.isfile("/root/.deepface/weights/efacial_expression_model_weights.h5"):
                 print("Model was found by an alternative path")
             else:
@@ -103,12 +95,12 @@ async def startup_event():
         print(f"Error while checking DeepFace: {e}")
 
 class Emot_Vector(BaseModel):
-    emots: List[float]
+    emots:List[float]
 
 class Stress_respo(BaseModel):
-    stress_level: str
-    probs: dict
-    confidence: float
+    stress_level:str
+    probs:dict
+    confidence:float
 
 def generate_emotion_vector(img_data):
     """
@@ -116,8 +108,8 @@ def generate_emotion_vector(img_data):
     """
     try:
         # Converts bytes array into image
-        img = cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img= cv2.imdecode(np.frombuffer(img_data, np.uint8), cv2.IMREAD_COLOR)
+        img= cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         try:
             predicts = DeepFace.analyze(img, actions=['emotion'], enforce_detection=False)
@@ -130,8 +122,8 @@ def generate_emotion_vector(img_data):
             all_emots = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral', 'contempt']
 
             # Create vector with all emotions
-            emot_vector = [emots.get(emotion, 0.0) for emotion in all_emots]
-            emot_vector = np.array(emot_vector, dtype=np.float32)
+            emot_vector= [emots.get(emotion, 0.0) for emotion in all_emots]
+            emot_vector=np.array(emot_vector, dtype=np.float32)
 
             # noramlise
             emot_vector = emot_vector / np.sum(emot_vector)
@@ -154,29 +146,29 @@ def calibrated_predict_with_model(emot_vector):
     global model_name, stress_model, model_metad, ftr_importance, learned_wghts
     
     if stress_model is None:
-        raise HTTPException(status_code=500, detail="model is not loaded")
+        raise HTTPException(status_code=500,detail="model is not loaded")
     
     stress_model.eval()
-    input_tensor = torch.tensor(emot_vector, dtype=torch.float32).unsqueeze(0)
+    input_tensor= torch.tensor(emot_vector,dtype=torch.float32).unsqueeze(0)
 
     with torch.no_grad():
-        outputs = stress_model(input_tensor)
-        probs = torch.nn.functional.softmax(outputs, dim=1).cpu().numpy().flatten()
+        outputs= stress_model(input_tensor)
+        probs= torch.nn.functional.softmax(outputs,dim=1).cpu().numpy().flatten()
 
     # Choose stress level with the biggest posibility
-    stress_levles = ['Low', 'Middle', 'High']
-    pred_index = np.argmax(probs)
-    pred_class = stress_levles[pred_index]
+    stress_lvls= ['Low','Middle','High']
+    pred_index= np.argmax(probs)
+    pred_class= stress_lvls[pred_index]
     
     # Get stress class metrics
     class_metrics = {}
     if model_metad and 'metrics' in model_metad:
-        metrics = model_metad['metrics']
+        metrics= model_metad['metrics']
         for metric_name in ['precision', 'recall', 'f1_score']:
             if metric_name in metrics and pred_class in metrics[metric_name]:
-                class_metrics[metric_name] = metrics[metric_name][pred_class]
+                class_metrics[metric_name]= metrics[metric_name][pred_class]
     
-    prob_dict = {level: float(prob) for level, prob in zip(stress_levles, probs)}
+    prob_dict= {level: float(prob) for level, prob in zip(stress_lvls, probs)}
     return pred_class,prob_dict,float(probs[pred_index]), class_metrics
 
 class Stress_respo(BaseModel):
@@ -186,45 +178,42 @@ class Stress_respo(BaseModel):
     metrics: Optional[dict] = None
 
 
-# Preprocess iamge
+# Preprocess img
 def resize_img(img, max_size=800):
-    wdth, height = img.size
+    wdth,height= img.size
     
-    if wdth > max_size or height > max_size:
-        if wdth > height:
-            new_wdth = max_size
-            new_height = int(height * (max_size / wdth))
+    if wdth> max_size or height> max_size:
+        if wdth> height:
+            new_wdth= max_size
+            new_height= int(height* (max_size / wdth))
         else:
-            new_height = max_size
-            new_wdth = int(wdth * (max_size / height))
+            new_height= max_size
+            new_wdth= int(wdth* (max_size / height))
         
-
         resized_img = img.resize((new_wdth, new_height), Image.LANCZOS)
         return resized_img
-    
     return img
 
 
 @app.post("/predict/image")
 async def predict_image(file: UploadFile = File(...)):
     try:
+        
         # Add request info into logs
         print(f"Request was got: {file.filename}, content_type: {file.content_type}")
-        
         global model_name, stress_model, model_metad, ftr_importance, learned_wghts
-        
+
         if stress_model is None:
             print("Loading stress model...")
             stress_model, ftr_importance, learned_wghts, model_metad = load_weighted_model(model_name)
         
         # Read img
-        contents = await file.read()
-        file_size = len(contents)
+        contents= await file.read()
+        file_size= len(contents)
         print(f"Read {file_size} data bytes")
         
-
-        max_file_size = 20 * 1024 * 1024
-        if file_size > max_file_size:
+        max_file_size= 20 * 1024 * 1024
+        if file_size> max_file_size:
             return {"status": "error", "detail": "File is too big. Max size - 20 mb"}
         
         # Decode image
@@ -232,20 +221,17 @@ async def predict_image(file: UploadFile = File(...)):
             img = Image.open(io.BytesIO(contents))
             print(f"Image successfully decoded, size: {img.size}, format: {img.format}")
 
-
-            max_image_size = 800 
-            img = resize_img(img, max_image_size)
+            max_img_size = 800 
+            img = resize_img(img, max_img_size)
             print(f"Image size after processing: {img.size}")
-            
 
             if img.mode != 'RGB':
                 img = img.convert('RGB')
                 print(f"Image converted into RGB")
-            
+
             # Convert into numpy array
-            img_array = np.array(img)
-            print(f"Image convert into numpy array, form: {img_array.shape}")
-            
+            img_array= np.array(img)
+            print(f"Image convert into numpy array, form: {img_array.shape}")            
             print("Call emotion analysis function...")
             
             # Process exceptional cases
@@ -256,9 +242,9 @@ async def predict_image(file: UploadFile = File(...)):
                 print(f"Error on the first try to analyse DeepFace: {str(deepface_error)}")
                 
                 try:
-                    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-                    normalized = cv2.equalizeHist(gray)
-                    enhanced = cv2.cvtColor(normalized, cv2.COLOR_GRAY2RGB)
+                    gray= cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+                    normalized= cv2.equalizeHist(gray)
+                    enhanced= cv2.cvtColor(normalized, cv2.COLOR_GRAY2RGB)
                     
                     print("Image enhanced for face recognition")
                     emots_result = DeepFace.analyze(img_path=enhanced, actions=['emotion'], enforce_detection=False)
@@ -268,13 +254,13 @@ async def predict_image(file: UploadFile = File(...)):
                     return {"status": "error", "detail": "The face in the image could not be detected. Please try another photo."}
             
             # Get emotions
-            emots = {}
+            emots= {}
             if isinstance(emots_result, list):
-                if len(emots_result) == 0:
+                if len(emots_result)== 0:
                     return {"status": "error", "detail": "Face was not found"}
-                emots = emots_result[0]['emotion']
+                emots= emots_result[0]['emotion']
             else:
-                emots = emots_result['emotion']
+                emots= emots_result['emotion']
             
             print(f"Emotion analysis result: {emots}")
             
@@ -302,15 +288,14 @@ async def predict_image(file: UploadFile = File(...)):
             stress_probs = torch.softmax(stress_output, dim=1).numpy()[0]
             stress_classes = ["Low", "Middle", "High"]
             stress_result = {stress_classes[i]: float(stress_probs[i]) for i in range(len(stress_classes))}
-            
-            predict_stress = stress_classes[np.argmax(stress_probs)]
+            pred_stress = stress_classes[np.argmax(stress_probs)]
             
             result = {
                 "emotions": emots,
                 "stress_probabilities": stress_result,
-                "predicted_stress": predict_stress
+                "predicted_stress": pred_stress
             }
-            print(f"Stress analysis result: {predict_stress}")
+            print(f"Stress analysis result: {pred_stress}")
             return {"status": "success", "result": result}
         
         except Exception as img_error:
