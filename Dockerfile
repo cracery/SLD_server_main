@@ -2,8 +2,10 @@ FROM python:3.9-slim-bookworm
 
 WORKDIR /app
 
-# Install necessary system dependencies
+# Оновлюємо apt та встановлюємо залежності
 RUN apt-get update && apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
@@ -11,39 +13,42 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     wget \
     git \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-# update pip
-RUN pip install --upgrade pip
+# Оновлюємо pip, setuptools, wheel
+RUN pip install --upgrade pip setuptools wheel
 
-# copy requirements.txt 
+# Копіюємо requirements.txt
 COPY requirements.txt .
 
-# Install dependencies from requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Встановлюємо залежності з таймаутом та повторними спробами
+RUN pip install --no-cache-dir --timeout=100 --retries=5 -r requirements.txt \
+    --index-url https://pypi.org/simple \
+    --trusted-host pypi.org --trusted-host files.pythonhosted.org
 
-# install PyTorch with CPU index
-RUN pip install --no-cache-dir --force-reinstall torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu
+# Встановлюємо PyTorch (CPU)
+RUN pip install --no-cache-dir --force-reinstall torch==2.0.1 \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Create directories
-RUN mkdir -p /root/.deepface/weights
-RUN mkdir -p models
+# Створюємо директорії
+RUN mkdir -p /root/.deepface/weights \
+ && mkdir -p /app/models
 
-# Download DeepFace model
+# Копіюємо моделі
 COPY ./models/facial_expression_model_weights.h5 /root/.deepface/weights/
 COPY ./models/* /app/models/
 
-# Copy project files
+# Копіюємо код проєкту
 COPY main.py .
 COPY model_loader.py .
 COPY utils.py .
 COPY static /app/static
 
-# install environment values 
+# Змінні середовища
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 ENV PORT=8000
 EXPOSE 8000
 
-# Run FastAPI
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+# Запуск FastAPI
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
