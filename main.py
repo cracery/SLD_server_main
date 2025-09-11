@@ -310,5 +310,4 @@ async def predict_image(file: UploadFile = File(...)):
     
 @app.get("/healthcheck")
 async def healthcheck():
-    global model_name, stress_model, model_metad
-    return {"status": "ok", "model_loaded": stress_model is not None}
+    return {"status": "ok"}
