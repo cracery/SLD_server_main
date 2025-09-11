@@ -47,6 +47,9 @@ COPY static /app/static
 
 # Змінні середовища
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=pythonENV PORT=8000
-EXPOSE ${PORT}
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+ENV PORT=8000
+EXPOSE 8000
+
+# Run FastAPI
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
 
